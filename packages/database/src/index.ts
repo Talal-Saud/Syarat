@@ -21,6 +21,7 @@ export {
   AvailabilityStatus,
   BodyType,
   FuelType,
+  ImportJobStatus,
   LeadStatus,
   MembershipRole,
   MembershipStatus,

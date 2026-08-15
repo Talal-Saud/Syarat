@@ -6,6 +6,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { type Environment } from '@syarat/config';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import multipart from '@fastify/multipart';
 import { randomUUID } from 'node:crypto';
 
 import { AppModule } from './app.module';
@@ -25,6 +26,13 @@ async function bootstrap(): Promise<void> {
     origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS']
+  });
+  await fastify.register(multipart, {
+    limits: {
+      files: 1,
+      fileSize: 15 * 1024 * 1024,
+      fields: 20
+    }
   });
 
   fastify.addHook('onRequest', async (request, reply) => {

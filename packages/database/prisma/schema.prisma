@@ -101,6 +101,17 @@ enum ReservationStatus {
   CANCELLED
 }
 
+enum ImportJobStatus {
+  UPLOADED
+  VALIDATING
+  PREVIEW_READY
+  QUEUED
+  PROCESSING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+}
+
 enum LeadStatus {
   NEW
   CONTACTED
@@ -231,6 +242,7 @@ model Tenant {
   memberships       TenantMembership[]
   branches          Branch[]
   vehicles          Vehicle[]
+  importJobs        ImportJob[]
   leads             Lead[]
 
   @@index([status, verificationStatus])
@@ -250,6 +262,7 @@ model TenantMembership {
   user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   branchScopes   MembershipBranchScope[]
   confirmedVehicles Vehicle[] @relation("AvailabilityConfirmedBy")
+  importJobs        ImportJob[]
 
   @@unique([tenantId, userId])
   @@index([userId, status])
@@ -332,6 +345,12 @@ model VehicleImage {
   sortOrder Int      @default(0) @map("sort_order")
   isPrimary Boolean  @default(false) @map("is_primary")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  thumbnailStorageKey String? @map("thumbnail_storage_key")
+  optimizedStorageKey String? @map("optimized_storage_key")
+  width     Int?
+  height    Int?
+  mimeType  String? @map("mime_type")
+  byteSize  Int? @map("byte_size")
   vehicle   Vehicle  @relation(fields: [tenantId, vehicleId], references: [tenantId, id], onDelete: Cascade)
 
   @@index([tenantId, vehicleId, sortOrder])
@@ -350,6 +369,27 @@ model Reservation {
 
   @@index([tenantId, vehicleId, status])
   @@map("reservations")
+}
+
+model ImportJob {
+  id                String          @id @default(uuid()) @db.Uuid
+  tenantId          String          @map("tenant_id") @db.Uuid
+  membershipId      String          @map("membership_id") @db.Uuid
+  storageKey        String          @map("storage_key")
+  originalFilename  String          @map("original_filename")
+  status            ImportJobStatus @default(UPLOADED)
+  totalRows         Int             @default(0) @map("total_rows")
+  validRows         Int             @default(0) @map("valid_rows")
+  invalidRows       Int             @default(0) @map("invalid_rows")
+  importedRows      Int             @default(0) @map("imported_rows")
+  errorReportKey    String?         @map("error_report_key")
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant            Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membership        TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, status, createdAt])
+  @@map("import_jobs")
 }
 
 model PriceHistory {

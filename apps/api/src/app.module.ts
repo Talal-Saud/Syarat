@@ -8,7 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { ImportsModule } from './imports/imports.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { StorageModule } from './storage/storage.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 
@@ -22,6 +24,8 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     TenancyModule,
     VehiclesModule,
     InventoryModule,
+    ImportsModule,
+    StorageModule,
     HealthModule
   ],
   providers: [

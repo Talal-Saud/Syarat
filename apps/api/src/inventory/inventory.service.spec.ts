@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AvailabilityStatus, PublicationStatus, ReservationStatus } from '@syarat/database';
 import { InventoryService } from './inventory.service';
 
-const context = { tenantId: '11111111-1111-4111-8111-111111111111', membershipId: '22222222-2222-4222-8222-222222222222', branchScope: { kind: 'all' as const }, permissions: ['inventory.manage'] as const };
+const context = { kind: 'tenant' as const, tenantId: '11111111-1111-4111-8111-111111111111', userId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', membershipId: '22222222-2222-4222-8222-222222222222', role: 'OWNER' as const, branchScope: { kind: 'all' as const }, permissions: new Set(['inventory.manage'] as const), correlationId: 'test-correlation' };
 
 describe('InventoryService reservations', () => {
   it('uses a serializable transaction and TenantContext tenant when creating a reservation', async () => {
