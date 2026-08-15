@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { CurrentTenantContext } from '../tenancy/current-tenant-context.decorator';
@@ -7,6 +7,7 @@ import { RequirePermission } from '../tenancy/require-permission.decorator';
 import type { TenantContext } from '../tenancy/tenant-context';
 import { TenantContextGuard } from '../tenancy/tenant-context.guard';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { VehiclesService, type TenantVehicle } from './vehicles.service';
 
 @ApiTags('tenant-vehicles')
@@ -15,27 +16,21 @@ import { VehiclesService, type TenantVehicle } from './vehicles.service';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
-  @Get()
-  @RequirePermission('vehicles.read')
-  list(@CurrentTenantContext() context: TenantContext): Promise<TenantVehicle[]> {
-    return this.vehiclesService.list(context);
-  }
+  @Get() @RequirePermission('vehicles.read')
+  list(@CurrentTenantContext() context: TenantContext): Promise<TenantVehicle[]> { return this.vehiclesService.list(context); }
 
-  @Post()
-  @RequirePermission('vehicles.manage')
-  create(@CurrentTenantContext() context: TenantContext, @Body() dto: CreateVehicleDto): Promise<TenantVehicle> {
-    return this.vehiclesService.create(context, dto);
-  }
+  @Get(':id') @RequirePermission('vehicles.read')
+  get(@CurrentTenantContext() context: TenantContext, @Param('id') id: string): Promise<TenantVehicle> { return this.vehiclesService.get(context, id); }
 
-  @Post(':vehicleId/availability/confirm')
-  @RequirePermission('inventory.manage')
-  confirmAvailability(@CurrentTenantContext() context: TenantContext, @Param('vehicleId') vehicleId: string): Promise<TenantVehicle> {
-    return this.vehiclesService.confirmAvailability(context, vehicleId);
-  }
+  @Post() @RequirePermission('vehicles.manage')
+  create(@CurrentTenantContext() context: TenantContext, @Body() dto: CreateVehicleDto): Promise<TenantVehicle> { return this.vehiclesService.create(context, dto); }
 
-  @Post(':vehicleId/reservations')
-  @RequirePermission('inventory.manage')
-  reserve(@CurrentTenantContext() context: TenantContext, @Param('vehicleId') vehicleId: string): Promise<{ reservationId: string; expiresAt: Date }> {
-    return this.vehiclesService.reserve(context, vehicleId);
-  }
+  @Patch(':id') @RequirePermission('vehicles.manage')
+  update(@CurrentTenantContext() context: TenantContext, @Param('id') id: string, @Body() dto: UpdateVehicleDto): Promise<TenantVehicle> { return this.vehiclesService.update(context, id, dto); }
+
+  @Post(':id/publish') @RequirePermission('vehicles.manage')
+  publish(@CurrentTenantContext() context: TenantContext, @Param('id') id: string): Promise<TenantVehicle> { return this.vehiclesService.publish(context, id); }
+
+  @Post(':id/archive') @RequirePermission('vehicles.manage')
+  archive(@CurrentTenantContext() context: TenantContext, @Param('id') id: string): Promise<TenantVehicle> { return this.vehiclesService.archive(context, id); }
 }

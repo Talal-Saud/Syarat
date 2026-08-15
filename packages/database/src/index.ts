@@ -28,6 +28,7 @@ export {
   PlanCode,
   PlatformAdminGrantStatus,
   PublicationStatus,
+  Prisma,
   ReservationStatus,
   PrismaClient,
   TenantStatus,
@@ -36,4 +37,4 @@ export {
   UserStatus,
   VerificationStatus
 } from '@prisma/client';
-export type { Prisma } from '@prisma/client';
+

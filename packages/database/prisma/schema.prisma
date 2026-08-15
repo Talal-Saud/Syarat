@@ -309,10 +309,13 @@ model Vehicle {
   confirmedByMembership       TenantMembership?  @relation("AvailabilityConfirmedBy", fields: [confirmedByMembershipId], references: [id], onDelete: SetNull)
   images                      VehicleImage[]
   reservations                Reservation[]
+  priceHistory                PriceHistory[]
+  statusHistory               VehicleStatusHistory[]
   leads                       Lead[]
 
   @@unique([tenantId, stockNumber])
   @@unique([tenantId, id])
+  @@index([tenantId, publicationStatus, availabilityStatus])
   @@index([branchId, publicationStatus, availabilityStatus])
   @@index([brandId, modelId])
   @@index([price])
@@ -347,6 +350,37 @@ model Reservation {
 
   @@index([tenantId, vehicleId, status])
   @@map("reservations")
+}
+
+model PriceHistory {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  vehicleId   String   @map("vehicle_id") @db.Uuid
+  previousPrice Decimal @map("previous_price") @db.Decimal(14, 2)
+  newPrice    Decimal  @map("new_price") @db.Decimal(14, 2)
+  changedByMembershipId String? @map("changed_by_membership_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  vehicle     Vehicle  @relation(fields: [tenantId, vehicleId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, vehicleId, createdAt])
+  @@map("price_history")
+}
+
+model VehicleStatusHistory {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  vehicleId   String   @map("vehicle_id") @db.Uuid
+  previousPublicationStatus PublicationStatus? @map("previous_publication_status")
+  newPublicationStatus PublicationStatus? @map("new_publication_status")
+  previousAvailabilityStatus AvailabilityStatus? @map("previous_availability_status")
+  newAvailabilityStatus AvailabilityStatus? @map("new_availability_status")
+  changedByMembershipId String? @map("changed_by_membership_id") @db.Uuid
+  reason      String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  vehicle     Vehicle  @relation(fields: [tenantId, vehicleId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, vehicleId, createdAt])
+  @@map("vehicle_status_history")
 }
 
 model Lead {
