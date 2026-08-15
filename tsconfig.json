@@ -1,0 +1,15 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./apps/web" },
+    { "path": "./apps/tenant-dashboard" },
+    { "path": "./apps/admin" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/config" },
+    { "path": "./packages/contracts" },
+    { "path": "./packages/database" },
+    { "path": "./packages/types" },
+    { "path": "./packages/validation" }
+  ]
+}

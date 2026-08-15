@@ -1,0 +1,33 @@
+{
+  "name": "@syarat/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate",
+    "prisma:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "eslint": "^9.31.0",
+    "prisma": "^6.19.3",
+    "tsx": "^4.19.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

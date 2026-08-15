@@ -1,0 +1,31 @@
+# Dependencies and build outputs
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+coverage/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local tooling and logs
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Prisma local artifacts
+packages/database/prisma/dev.db
+packages/database/prisma/dev.db-journal
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# TypeScript incremental metadata
+*.tsbuildinfo

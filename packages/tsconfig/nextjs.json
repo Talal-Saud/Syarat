@@ -1,0 +1,4 @@
+{
+  "extends": "./base.json",
+  "compilerOptions": { "module": "esnext", "moduleResolution": "bundler", "jsx": "preserve", "noEmit": true }
+}

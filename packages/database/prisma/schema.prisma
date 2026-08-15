@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum OtpPurpose {
+  CUSTOMER_LOGIN
+  QUOTE_REQUEST
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlanCode {
+  STARTER
+  PRO
+}
+
+enum MembershipRole {
+  OWNER
+  MANAGER
+  SALES_REPRESENTATIVE
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum PlatformAdminGrantStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum VehicleCondition {
+  NEW
+  USED
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  AVAILABILITY_UNCONFIRMED
+  RESERVED
+  SOLD
+  UNAVAILABLE
+}
+
+enum TransmissionType {
+  AUTOMATIC
+  MANUAL
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum BodyType {
+  SEDAN
+  SUV
+  PICKUP
+  HATCHBACK
+  COUPE
+  VAN
+  OTHER
+}
+
+enum ReservationStatus {
+  ACTIVE
+  RELEASED
+  CANCELLED
+}
+
+model User {
+  id            String             @id @default(uuid()) @db.Uuid
+  phoneE164     String?            @unique @map("phone_e164")
+  phoneHash     String?            @unique @map("phone_hash")
+  passwordHash  String?            @map("password_hash")
+  status        UserStatus         @default(ACTIVE)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  otpChallenges OtpChallenge[]
+  sessions      Session[]
+  memberships   TenantMembership[]
+  platformAdminGrant PlatformAdminGrant?
+
+  @@map("users")
+}
+
+model OtpChallenge {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String?    @map("user_id") @db.Uuid
+  phoneHash   String     @map("phone_hash")
+  purpose     OtpPurpose
+  codeHash    String     @map("code_hash")
+  expiresAt   DateTime   @map("expires_at") @db.Timestamptz(6)
+  attempts    Int        @default(0)
+  maxAttempts Int        @default(5) @map("max_attempts")
+  consumedAt  DateTime?  @map("consumed_at") @db.Timestamptz(6)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([phoneHash, purpose, createdAt])
+  @@index([expiresAt])
+  @@map("otp_challenges")
+}
+
+model Session {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  refreshTokenHash      String    @unique @map("refresh_token_hash")
+  refreshTokenFamilyId  String    @map("refresh_token_family_id") @db.Uuid
+  refreshTokenExpiresAt DateTime  @map("refresh_token_expires_at") @db.Timestamptz(6)
+  revokedAt             DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastUsedAt            DateTime? @map("last_used_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([refreshTokenFamilyId])
+  @@index([refreshTokenExpiresAt])
+  @@map("sessions")
+}
+
+model City {
+  id          String   @id @default(uuid()) @db.Uuid
+  arabicName  String   @unique @map("arabic_name")
+  englishName String?  @map("english_name")
+  slug        String   @unique
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  branches    Branch[]
+
+  @@map("cities")
+}
+
+model Brand {
+  id          String         @id @default(uuid()) @db.Uuid
+  arabicName  String         @unique @map("arabic_name")
+  englishName String?        @map("english_name")
+  slug        String         @unique
+  isActive    Boolean        @default(true) @map("is_active")
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  models      VehicleModel[]
+  vehicles    Vehicle[]
+
+  @@map("brands")
+}
+
+model VehicleModel {
+  id          String   @id @default(uuid()) @db.Uuid
+  brandId     String   @map("brand_id") @db.Uuid
+  arabicName  String   @map("arabic_name")
+  englishName String?  @map("english_name")
+  slug        String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  vehicles    Vehicle[]
+
+  @@unique([brandId, slug])
+  @@index([brandId, isActive])
+  @@map("vehicle_models")
+}
+
+model PlatformAdminGrant {
+  id        String                   @id @default(uuid()) @db.Uuid
+  userId    String                   @unique @map("user_id") @db.Uuid
+  status    PlatformAdminGrantStatus @default(ACTIVE)
+  createdAt DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("platform_admin_grants")
+}
+
+model Tenant {
+  id                String             @id @default(uuid()) @db.Uuid
+  name              String
+  slug              String             @unique
+  status            TenantStatus       @default(PENDING)
+  verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
+  planCode          PlanCode           @default(STARTER) @map("plan_code")
+  maxActiveVehicles Int                @default(50) @map("max_active_vehicles")
+  maxEmployees      Int                @default(3) @map("max_employees")
+  maxBranches       Int                @default(1) @map("max_branches")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships       TenantMembership[]
+  branches          Branch[]
+  vehicles          Vehicle[]
+
+  @@index([status, verificationStatus])
+  @@map("tenants")
+}
+
+model TenantMembership {
+  id             String                 @id @default(uuid()) @db.Uuid
+  tenantId       String                 @map("tenant_id") @db.Uuid
+  userId         String                 @map("user_id") @db.Uuid
+  role           MembershipRole
+  status         MembershipStatus       @default(INVITED)
+  branchScopeAll Boolean                @default(true) @map("branch_scope_all")
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branchScopes   MembershipBranchScope[]
+  confirmedVehicles Vehicle[] @relation("AvailabilityConfirmedBy")
+
+  @@unique([tenantId, userId])
+  @@index([userId, status])
+  @@index([tenantId, status])
+  @@map("tenant_memberships")
+}
+
+model Branch {
+  id           String                  @id @default(uuid()) @db.Uuid
+  tenantId     String                  @map("tenant_id") @db.Uuid
+  cityId       String                  @map("city_id") @db.Uuid
+  name         String
+  address      String?
+  phone        String?
+  whatsapp     String?
+  isPrimary    Boolean                 @default(false) @map("is_primary")
+  createdAt    DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  city         City                    @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  memberScopes MembershipBranchScope[]
+  vehicles     Vehicle[]              @relation("BranchVehicles")
+
+  @@unique([tenantId, id])
+  @@index([tenantId, isPrimary])
+  @@index([cityId])
+  @@map("branches")
+}
+
+model Vehicle {
+  id                          String             @id @default(uuid()) @db.Uuid
+  tenantId                    String             @map("tenant_id") @db.Uuid
+  branchId                    String             @map("branch_id") @db.Uuid
+  stockNumber                 String             @map("stock_number")
+  brandId                     String             @map("brand_id") @db.Uuid
+  modelId                     String             @map("model_id") @db.Uuid
+  year                        Int
+  condition                   VehicleCondition
+  price                       Decimal            @db.Decimal(14, 2)
+  mileage                     Int?
+  transmission                TransmissionType
+  fuelType                    FuelType           @map("fuel_type")
+  bodyType                    BodyType           @map("body_type")
+  description                 String?
+  publicationStatus           PublicationStatus  @default(DRAFT) @map("publication_status")
+  availabilityStatus          AvailabilityStatus @default(AVAILABLE) @map("availability_status")
+  lastAvailabilityConfirmedAt DateTime?          @map("last_availability_confirmed_at") @db.Timestamptz(6)
+  nextConfirmationDueAt       DateTime?          @map("next_confirmation_due_at") @db.Timestamptz(6)
+  confirmedByMembershipId     String?            @map("confirmed_by_membership_id") @db.Uuid
+  priceUpdatedAt              DateTime           @default(now()) @map("price_updated_at") @db.Timestamptz(6)
+  createdAt                   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant                      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch                      Branch             @relation("BranchVehicles", fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  brand                       Brand              @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  model                       VehicleModel       @relation(fields: [modelId], references: [id], onDelete: Restrict)
+  confirmedByMembership       TenantMembership?  @relation("AvailabilityConfirmedBy", fields: [confirmedByMembershipId], references: [id], onDelete: SetNull)
+  images                      VehicleImage[]
+  reservations                Reservation[]
+
+  @@unique([tenantId, stockNumber])
+  @@unique([tenantId, id])
+  @@index([branchId, publicationStatus, availabilityStatus])
+  @@index([brandId, modelId])
+  @@index([price])
+  @@index([year])
+  @@index([nextConfirmationDueAt])
+  @@map("vehicles")
+}
+
+model VehicleImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  vehicleId String   @map("vehicle_id") @db.Uuid
+  storageKey String  @map("storage_key")
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  vehicle   Vehicle  @relation(fields: [tenantId, vehicleId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, vehicleId, sortOrder])
+  @@map("vehicle_images")
+}
+
+model Reservation {
+  id        String            @id @default(uuid()) @db.Uuid
+  tenantId  String            @map("tenant_id") @db.Uuid
+  vehicleId String            @map("vehicle_id") @db.Uuid
+  status    ReservationStatus @default(ACTIVE)
+  expiresAt DateTime?         @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vehicle   Vehicle           @relation(fields: [tenantId, vehicleId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, vehicleId, status])
+  @@map("reservations")
+}
+
+model MembershipBranchScope {
+  membershipId String           @map("membership_id") @db.Uuid
+  branchId     String           @map("branch_id") @db.Uuid
+  membership   TenantMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  branch       Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, branchId])
+  @@index([branchId])
+  @@map("membership_branch_scopes")
+}
