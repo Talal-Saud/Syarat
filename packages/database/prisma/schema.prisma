@@ -101,6 +101,14 @@ enum ReservationStatus {
   CANCELLED
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  WON
+  LOST
+}
+
 model User {
   id            String             @id @default(uuid()) @db.Uuid
   phoneE164     String?            @unique @map("phone_e164")
@@ -223,6 +231,7 @@ model Tenant {
   memberships       TenantMembership[]
   branches          Branch[]
   vehicles          Vehicle[]
+  leads             Lead[]
 
   @@index([status, verificationStatus])
   @@map("tenants")
@@ -300,6 +309,7 @@ model Vehicle {
   confirmedByMembership       TenantMembership?  @relation("AvailabilityConfirmedBy", fields: [confirmedByMembershipId], references: [id], onDelete: SetNull)
   images                      VehicleImage[]
   reservations                Reservation[]
+  leads                       Lead[]
 
   @@unique([tenantId, stockNumber])
   @@unique([tenantId, id])
@@ -337,6 +347,25 @@ model Reservation {
 
   @@index([tenantId, vehicleId, status])
   @@map("reservations")
+}
+
+model Lead {
+  id        String     @id @default(uuid()) @db.Uuid
+  tenantId  String     @map("tenant_id") @db.Uuid
+  vehicleId String?    @map("vehicle_id") @db.Uuid
+  name      String?
+  phoneHash String     @map("phone_hash")
+  source    String
+  message   String?
+  status    LeadStatus @default(NEW)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([vehicleId])
+  @@map("leads")
 }
 
 model MembershipBranchScope {

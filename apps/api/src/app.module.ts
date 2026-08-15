@@ -7,8 +7,11 @@ import { parseEnvironment } from '@syarat/config';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { LeadsModule } from './leads/leads.module';
+import { MarketplaceModule } from './marketplace/marketplace.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { TenancyModule } from './tenancy/tenancy.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
@@ -29,6 +32,9 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     AuthModule,
     AdminModule,
     CatalogModule,
+    DashboardModule,
+    MarketplaceModule,
+    LeadsModule,
     OnboardingModule,
     TenancyModule,
     VehiclesModule,
