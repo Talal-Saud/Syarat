@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserStatus } from '@syarat/database';
+import { SessionPrincipalKind, UserStatus } from '@syarat/database';
 import type { FastifyRequest } from 'fastify';
 
 import { PrismaService } from '../database/prisma.service';
@@ -28,7 +28,7 @@ export class AccessTokenGuard implements CanActivate {
 
     let payload: AccessTokenPayload;
     try {
-      payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token);
+      payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token, { algorithms: ['HS256'] });
     } catch {
       throw new UnauthorizedException({ code: 'ACCESS_TOKEN_INVALID', message: 'جلسة الدخول غير صالحة أو منتهية.' });
     }
@@ -38,7 +38,7 @@ export class AccessTokenGuard implements CanActivate {
       include: { user: { select: { id: true, status: true } } }
     });
 
-    if (!session || session.revokedAt || session.refreshTokenExpiresAt <= new Date() || session.user.id !== payload.sub || session.user.status !== UserStatus.ACTIVE) {
+    if (!session || session.revokedAt || session.refreshTokenExpiresAt <= new Date() || session.user.id !== payload.sub || session.user.status !== UserStatus.ACTIVE || (payload.kind === 'staff' ? session.principalKind !== SessionPrincipalKind.STAFF : session.principalKind !== SessionPrincipalKind.CUSTOMER)) {
       throw new UnauthorizedException({ code: 'SESSION_INVALID', message: 'جلسة الدخول غير صالحة أو منتهية.' });
     }
 

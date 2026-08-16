@@ -33,6 +33,7 @@ export {
   PublicationStatus,
   Prisma,
   ReservationStatus,
+  SessionPrincipalKind,
   PrismaClient,
   TenantStatus,
   TransmissionType,

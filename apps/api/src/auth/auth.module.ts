@@ -12,7 +12,7 @@ import { AuthService } from './auth.service';
       inject: ['ENVIRONMENT'],
       useFactory: (environment: Environment) => ({
         secret: environment.JWT_ACCESS_SECRET,
-        signOptions: { expiresIn: environment.JWT_ACCESS_TTL_SECONDS }
+        signOptions: { expiresIn: environment.JWT_ACCESS_TTL_SECONDS, algorithm: 'HS256' }
       })
     })
   ],

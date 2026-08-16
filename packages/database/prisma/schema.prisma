@@ -104,6 +104,11 @@ enum BodyType {
   OTHER
 }
 
+enum SessionPrincipalKind {
+  CUSTOMER
+  STAFF
+}
+
 enum ReservationStatus {
   ACTIVE
   RELEASED
@@ -174,8 +179,9 @@ model OtpChallenge {
 }
 
 model Session {
-  id                    String    @id @default(uuid()) @db.Uuid
-  userId                String    @map("user_id") @db.Uuid
+  id                    String               @id @default(uuid()) @db.Uuid
+  userId                String               @map("user_id") @db.Uuid
+  principalKind         SessionPrincipalKind @default(CUSTOMER) @map("principal_kind")
   refreshTokenHash      String    @unique @map("refresh_token_hash")
   refreshTokenFamilyId  String    @map("refresh_token_family_id") @db.Uuid
   refreshTokenExpiresAt DateTime  @map("refresh_token_expires_at") @db.Timestamptz(6)

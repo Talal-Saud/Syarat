@@ -1,6 +1,6 @@
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { OtpPurpose, SessionPrincipalKind, UserStatus } from '@syarat/database';
 import { JwtService } from '@nestjs/jwt';
-import { OtpPurpose, UserStatus } from '@syarat/database';
 import { createHmac, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import { type Environment } from '@syarat/config';
@@ -26,6 +26,8 @@ export class AuthService {
     const challengeId = randomUUID();
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
     const existingUser = await this.prisma.user.findUnique({ where: { phoneHash } });
+    const recentChallenge = await this.prisma.otpChallenge.findFirst({ where: { phoneHash, purpose: dto.purpose as OtpPurpose, createdAt: { gte: new Date(Date.now() - 60_000) } }, select: { id: true } });
+    if (recentChallenge) throw new HttpException({ code: 'OTP_RESEND_LIMIT', message: 'انتظر دقيقة قبل طلب رمز تحقق جديد.' }, HttpStatus.TOO_MANY_REQUESTS);
 
     await this.prisma.otpChallenge.create({
       data: {
@@ -111,7 +113,7 @@ export class AuthService {
     }
 
     await this.prisma.session.update({ where: { id: current.id }, data: { revokedAt: new Date(), lastUsedAt: new Date() } });
-    return this.createSession(current.userId, 'customer', current.refreshTokenFamilyId);
+    return this.createSession(current.userId, current.principalKind === SessionPrincipalKind.STAFF ? 'staff' : 'customer', current.refreshTokenFamilyId);
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -131,6 +133,7 @@ export class AuthService {
     const session = await this.prisma.session.create({
       data: {
         userId,
+        principalKind: kind === 'staff' ? SessionPrincipalKind.STAFF : SessionPrincipalKind.CUSTOMER,
         refreshTokenHash: this.hashRefreshToken(refreshToken),
         refreshTokenFamilyId,
         refreshTokenExpiresAt
