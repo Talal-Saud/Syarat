@@ -53,6 +53,15 @@ enum PlatformAdminGrantStatus {
   REVOKED
 }
 
+enum PlatformAdminRole {
+  SUPER_ADMIN
+  OPERATIONS
+  MODERATION
+  CATALOG_MANAGER
+  ANALYST
+  BILLING_MANAGER
+}
+
 enum VehicleCondition {
   NEW
   USED
@@ -141,6 +150,7 @@ model User {
   sessions      Session[]
   memberships   TenantMembership[]
   platformAdminGrant PlatformAdminGrant?
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -228,15 +238,32 @@ model VehicleModel {
 }
 
 model PlatformAdminGrant {
-  id        String                   @id @default(uuid()) @db.Uuid
-  userId    String                   @unique @map("user_id") @db.Uuid
-  status    PlatformAdminGrantStatus @default(ACTIVE)
-  createdAt DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String                   @id @default(uuid()) @db.Uuid
+  userId      String                   @unique @map("user_id") @db.Uuid
+  role        PlatformAdminRole        @default(OPERATIONS)
+  permissions String[]                 @default([])
+  status      PlatformAdminGrantStatus @default(ACTIVE)
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([status])
+  @@index([status, role])
   @@map("platform_admin_grants")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorUserId String  @map("actor_user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor      User     @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@map("audit_logs")
 }
 
 model Tenant {
@@ -247,6 +274,7 @@ model Tenant {
   status            TenantStatus       @default(PENDING)
   verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
   planCode          PlanCode           @default(STARTER) @map("plan_code")
+  subscriptionExpiresAt DateTime?       @map("subscription_expires_at") @db.Timestamptz(6)
   maxActiveVehicles Int                @default(50) @map("max_active_vehicles")
   maxEmployees      Int                @default(3) @map("max_employees")
   maxBranches       Int                @default(1) @map("max_branches")

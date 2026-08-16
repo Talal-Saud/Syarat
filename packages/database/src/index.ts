@@ -29,6 +29,7 @@ export {
   OtpPurpose,
   PlanCode,
   PlatformAdminGrantStatus,
+  PlatformAdminRole,
   PublicationStatus,
   Prisma,
   ReservationStatus,
