@@ -115,9 +115,17 @@ enum ImportJobStatus {
 enum LeadStatus {
   NEW
   CONTACTED
-  IN_PROGRESS
+  INTERESTED
+  APPOINTMENT
   WON
   LOST
+}
+
+enum LeadActivityType {
+  CREATED
+  STATUS_CHANGED
+  ASSIGNED
+  NOTE_ADDED
 }
 
 model User {
@@ -129,6 +137,7 @@ model User {
   createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   otpChallenges OtpChallenge[]
+  customerLeads Lead[] @relation("CustomerLeads")
   sessions      Session[]
   memberships   TenantMembership[]
   platformAdminGrant PlatformAdminGrant?
@@ -248,6 +257,7 @@ model Tenant {
   vehicles          Vehicle[]
   importJobs        ImportJob[]
   leads             Lead[]
+  leadActivities    LeadActivity[]
 
   @@index([status, verificationStatus])
   @@map("tenants")
@@ -267,6 +277,8 @@ model TenantMembership {
   branchScopes   MembershipBranchScope[]
   confirmedVehicles Vehicle[] @relation("AvailabilityConfirmedBy")
   importJobs        ImportJob[]
+  assignedLeads     Lead[] @relation("AssignedLeadMembership")
+  leadActivities    LeadActivity[]
 
   @@unique([tenantId, userId])
   @@index([userId, status])
@@ -289,6 +301,7 @@ model Branch {
   city         City                    @relation(fields: [cityId], references: [id], onDelete: Restrict)
   memberScopes MembershipBranchScope[]
   vehicles     Vehicle[]              @relation("BranchVehicles")
+  leads        Lead[]
 
   @@unique([tenantId, id])
   @@index([tenantId, isPrimary])
@@ -429,22 +442,50 @@ model VehicleStatusHistory {
 }
 
 model Lead {
-  id        String     @id @default(uuid()) @db.Uuid
-  tenantId  String     @map("tenant_id") @db.Uuid
-  vehicleId String?    @map("vehicle_id") @db.Uuid
-  name      String?
-  phoneHash String     @map("phone_hash")
-  source    String
-  message   String?
-  status    LeadStatus @default(NEW)
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  id                 String            @id @default(uuid()) @db.Uuid
+  tenantId           String            @map("tenant_id") @db.Uuid
+  branchId           String            @map("branch_id") @db.Uuid
+  vehicleId          String?           @map("vehicle_id") @db.Uuid
+  customerUserId     String            @map("customer_user_id") @db.Uuid
+  name               String
+  phoneE164          String            @map("phone_e164")
+  phoneHash          String            @map("phone_hash")
+  assignedEmployeeId String?           @map("assigned_employee_id") @db.Uuid
+  source             String
+  message            String?
+  status             LeadStatus        @default(NEW)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant             Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch             Branch            @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  vehicle            Vehicle?          @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  customerUser       User              @relation("CustomerLeads", fields: [customerUserId], references: [id], onDelete: Restrict)
+  assignedEmployee   TenantMembership? @relation("AssignedLeadMembership", fields: [assignedEmployeeId], references: [id], onDelete: SetNull)
+  activities         LeadActivity[]
 
   @@index([tenantId, status, createdAt])
+  @@index([tenantId, branchId, status, createdAt])
   @@index([vehicleId])
+  @@index([customerUserId, vehicleId, createdAt])
   @@map("leads")
+}
+
+model LeadActivity {
+  id                String            @id @default(uuid()) @db.Uuid
+  tenantId          String            @map("tenant_id") @db.Uuid
+  leadId            String            @map("lead_id") @db.Uuid
+  actorMembershipId String?           @map("actor_membership_id") @db.Uuid
+  type              LeadActivityType
+  fromStatus        LeadStatus?       @map("from_status")
+  toStatus          LeadStatus?       @map("to_status")
+  note              String?
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead              Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actorMembership   TenantMembership? @relation(fields: [actorMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, leadId, createdAt])
+  @@map("lead_activities")
 }
 
 model MembershipBranchScope {

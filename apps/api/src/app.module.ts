@@ -10,6 +10,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { ImportsModule } from './imports/imports.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { LeadsModule } from './leads/leads.module';
 import { PublicMarketplaceModule } from './marketplace/public-marketplace.module';
 import { StorageModule } from './storage/storage.module';
 import { TenancyModule } from './tenancy/tenancy.module';
@@ -25,6 +26,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     TenancyModule,
     VehiclesModule,
     InventoryModule,
+    LeadsModule,
     PublicMarketplaceModule,
     ImportsModule,
     StorageModule,

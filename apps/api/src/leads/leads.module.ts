@@ -1,12 +1,7 @@
 import { Module } from '@nestjs/common';
 
-import { TenancyModule } from '../tenancy/tenancy.module';
-import { LeadsController } from './leads.controller';
 import { LeadsService } from './leads.service';
+import { PublicQuoteRequestController, TenantLeadsController } from './leads.controller';
 
-@Module({
-  imports: [TenancyModule],
-  controllers: [LeadsController],
-  providers: [LeadsService]
-})
+@Module({ controllers: [TenantLeadsController, PublicQuoteRequestController], providers: [LeadsService], exports: [LeadsService] })
 export class LeadsModule {}
