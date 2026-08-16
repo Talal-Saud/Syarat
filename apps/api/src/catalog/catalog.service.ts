@@ -9,6 +9,7 @@ export type CatalogCity = {
   id: string;
   arabicName: string;
   englishName: string | null;
+  aliases: string[];
   slug: string;
 };
 
@@ -16,6 +17,7 @@ export type CatalogBrand = {
   id: string;
   arabicName: string;
   englishName: string | null;
+  aliases: string[];
   slug: string;
 };
 
@@ -23,6 +25,7 @@ export type CatalogVehicleModel = {
   id: string;
   arabicName: string;
   englishName: string | null;
+  aliases: string[];
   slug: string;
 };
 
@@ -33,7 +36,7 @@ export class CatalogService {
   listPublicCities(): Promise<CatalogCity[]> {
     return this.prisma.city.findMany({
       where: { isActive: true },
-      select: { id: true, arabicName: true, englishName: true, slug: true },
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true },
       orderBy: { arabicName: 'asc' }
     });
   }
@@ -41,7 +44,7 @@ export class CatalogService {
   listPublicBrands(): Promise<CatalogBrand[]> {
     return this.prisma.brand.findMany({
       where: { isActive: true },
-      select: { id: true, arabicName: true, englishName: true, slug: true },
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true },
       orderBy: { arabicName: 'asc' }
     });
   }
@@ -53,7 +56,7 @@ export class CatalogService {
     }
     return this.prisma.vehicleModel.findMany({
       where: { brandId, isActive: true },
-      select: { id: true, arabicName: true, englishName: true, slug: true },
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true },
       orderBy: { arabicName: 'asc' }
     });
   }
@@ -61,14 +64,14 @@ export class CatalogService {
   createCity(dto: CreateCityDto): Promise<CatalogCity> {
     return this.prisma.city.create({
       data: dto,
-      select: { id: true, arabicName: true, englishName: true, slug: true }
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true }
     });
   }
 
   createBrand(dto: CreateBrandDto): Promise<CatalogBrand> {
     return this.prisma.brand.create({
       data: dto,
-      select: { id: true, arabicName: true, englishName: true, slug: true }
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true }
     });
   }
 
@@ -79,7 +82,7 @@ export class CatalogService {
     }
     return this.prisma.vehicleModel.create({
       data: { brandId, ...dto },
-      select: { id: true, arabicName: true, englishName: true, slug: true }
+      select: { id: true, arabicName: true, englishName: true, aliases: true, slug: true }
     });
   }
 }

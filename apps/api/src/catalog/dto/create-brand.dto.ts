@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsArray, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 export class CreateBrandDto {
   @IsString()
@@ -9,6 +9,11 @@ export class CreateBrandDto {
   @IsString()
   @MaxLength(120)
   englishName?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
 
   @IsString()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
